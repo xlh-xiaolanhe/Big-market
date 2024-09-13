@@ -1,7 +1,11 @@
 package com.xiaolanhe.domain.strategy.service.armory;
 
 import com.xiaolanhe.domain.strategy.model.entity.StrategyAwardEntity;
+import com.xiaolanhe.domain.strategy.model.entity.StrategyEntity;
+import com.xiaolanhe.domain.strategy.model.entity.StrategyRuleEntity;
 import com.xiaolanhe.domain.strategy.repository.IStrategyRepository;
+import com.xiaolanhe.types.enums.ResponseCode;
+import com.xiaolanhe.types.exceptions.AppException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +17,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *@author: xiaolanhe
@@ -21,7 +26,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
-public class StrategyArmory implements IStrategyArmory{
+public class StrategyArmoryDispatch implements IStrategyArmory, IStrategyDispatch{
 
     @Resource
     private IStrategyRepository repository;
@@ -31,19 +36,42 @@ public class StrategyArmory implements IStrategyArmory{
     public boolean assembleLotteryStrategy(Long strategyId) {
         // 1. 查询策略配置
         List<StrategyAwardEntity> strategyAwards = repository.queryStrategyAwardListByStrategyId(strategyId);
+        assembleLotteryStrategy(String.valueOf(strategyId), strategyAwards);
 
-        // 2. 获取最小概率值
+        // 2. 权重策略配置 - 适用于 rule_weight 权重规则配置
+        StrategyEntity strategyEntity = repository.queryStrategyEntityByStrategyId(strategyId);
+        String ruleWeight = strategyEntity.getRuleWeight();
+        if (null == ruleWeight){
+            return true;
+        }
+        StrategyRuleEntity strategyRuleEntity = repository.queryStrategyRule(strategyId, ruleWeight);
+        if (null == strategyRuleEntity) {
+            throw new AppException(ResponseCode.STRATEGY_RULE_WEIGHT_IS_NULL.getCode(), ResponseCode.STRATEGY_RULE_WEIGHT_IS_NULL.getInfo());
+        }
+        Map<String, List<Integer>> ruleWightValues = strategyRuleEntity.getRuleWightValues();
+        for(String key : ruleWightValues.keySet()){
+            List<Integer> values = ruleWightValues.get(key);
+            List<StrategyAwardEntity> strategyAwardsClone = new ArrayList<>(strategyAwards);
+            strategyAwardsClone.removeIf(item -> !values.contains(item.getAwardId()));
+            assembleLotteryStrategy(String.valueOf(strategyId).concat("_").concat(key), strategyAwardsClone);
+        }
+
+        return true;
+    }
+
+    private void assembleLotteryStrategy(String strategyId, List<StrategyAwardEntity> strategyAwards) {
+        //  获取最小概率值
         BigDecimal minRate = strategyAwards.stream().map(StrategyAwardEntity::getAwardRate)
                 .min(BigDecimal::compareTo)
                 .orElse(BigDecimal.ZERO);
 
-        // 3. 获取概率值总和
+        //  获取概率值总和
         BigDecimal totalRate = strategyAwards.stream().map(StrategyAwardEntity::getAwardRate)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal rateRange = totalRate.divide(minRate, 0, BigDecimal.ROUND_CEILING);
 
-        // 5. 生成策略奖品概率查找表「这里指需要在list集合中，存放上对应的奖品占位即可，占位越多等于概率越高」
+        //  生成策略奖品概率查找表「这里指需要在list集合中，存放上对应的奖品占位即可，占位越多等于概率越高」
         List<Integer> strategyAwardSearchRateTables = new ArrayList<>(rateRange.intValue());
         for(StrategyAwardEntity award : strategyAwards){
             Integer awardId = award.getAwardId();
@@ -63,8 +91,6 @@ public class StrategyArmory implements IStrategyArmory{
 
         // 存入redis
         repository.storeStrategyAwardSearchTable(strategyId, shuffleStrategyAwardSearchRateTable.size(), shuffleStrategyAwardSearchRateTable);
-
-        return true;
     }
 
     /**
@@ -77,6 +103,14 @@ public class StrategyArmory implements IStrategyArmory{
     public Integer getRandomAwardId(Long strategyId) {
         int rateRange = repository.getRateRange(strategyId);
         // 通过生成的随机值，获取概率值奖品查找表的结果
-        return repository.getStrategyAwardAssemble(strategyId, new SecureRandom().nextInt(rateRange));
+        return repository.getStrategyAwardAssemble(String.valueOf(strategyId), new SecureRandom().nextInt(rateRange));
+    }
+
+    @Override
+    public Integer getRandomAwardId(Long strategyId, String ruleWeightValue) {
+        String key = String.valueOf(strategyId).concat("_").concat(ruleWeightValue);
+        int rateRange = repository.getRateRange(key);
+        // 通过生成的随机值，获取概率值奖品查找表的结果
+        return repository.getStrategyAwardAssemble(key, new SecureRandom().nextInt(rateRange));
     }
 }
