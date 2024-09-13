@@ -84,6 +84,7 @@
             <version>2.9.0</version>
         </dependency>
 
+
         <!-- 工程模块；启动依赖 trigger->domain, infrastructure-->
         <dependency>
             <groupId>com.xiaolanhe</groupId>
