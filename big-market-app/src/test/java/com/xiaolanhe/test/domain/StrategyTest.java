@@ -32,13 +32,13 @@ public class StrategyTest {
 
     @Test
     public void test_assembleLotteryStrategy() {
-        boolean res = strategyArmory.assembleLotteryStrategy(100002L);
+        boolean res = strategyArmory.assembleLotteryStrategy(100001L);
         log.info("测试结果：{}", res);
     }
 
     @Test
     public void test_getAwardRateMap() {
-        RMap<Object, Object> map = redisService.getMap("big_market_strategy_rate_table_key_100002");
+        RMap<Object, Object> map = redisService.getMap("big_market_strategy_rate_table_key_100001");
         log.info("test_getAwardRateMap: {}", GsonUtils.toJson(map));
     }
 }
