@@ -16,6 +16,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,7 +62,7 @@ public class RuleWeightLogicFilter implements ILogicFilter<RuleActionEntity.Raff
 
         // 2. 转换Keys值，并默认排序
         List<Long> analyticalSortedKeys = new ArrayList<>(analyticalValueGroup.keySet());
-        Collections.sort(analyticalSortedKeys);
+        Collections.sort(analyticalSortedKeys, Comparator.reverseOrder());
 
         Long minValue = analyticalSortedKeys.stream().filter(item -> userScore >= item).findFirst().orElse(null);
 

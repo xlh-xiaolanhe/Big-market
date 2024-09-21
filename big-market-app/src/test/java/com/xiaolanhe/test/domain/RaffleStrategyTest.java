@@ -61,4 +61,17 @@ public class RaffleStrategyTest {
         log.info("请求参数：{}", JSON.toJSONString(raffleFactorEntity));
         log.info("测试结果：{}", JSON.toJSONString(raffleAwardEntity));
     }
+
+    @Test
+    public void test_raffle_center_rule_lock(){
+        RaffleFactorEntity raffleFactorEntity = RaffleFactorEntity.builder()
+                .userId("xiaolanhe")
+                .strategyId(100003L)
+                .build();
+
+        RaffleAwardEntity raffleAwardEntity = raffleStrategy.executeRaffle(raffleFactorEntity);
+
+        log.info("请求参数：{}", JSON.toJSONString(raffleFactorEntity));
+        log.info("测试结果：{}", JSON.toJSONString(raffleAwardEntity));
+    }
 }
