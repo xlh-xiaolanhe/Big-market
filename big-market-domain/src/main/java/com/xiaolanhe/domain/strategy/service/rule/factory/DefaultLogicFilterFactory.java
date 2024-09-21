@@ -45,11 +45,9 @@ public class DefaultLogicFilterFactory {
     @AllArgsConstructor
     public enum LogicModel {
 
-        RULE_WIGHT("rule_weight", "【抽奖前规则】根据抽奖权重返回可抽奖范围KEY", "before"),
-        RULE_BLACKLIST("rule_blacklist", "【抽奖前规则】黑名单规则过滤，命中黑名单则直接返回", "before"),
+
         RULE_LOCK("rule_lock", "【抽奖中规则】抽奖n次后，对应奖品可解锁抽奖", "center"),
         RULE_LUCK_AWARD("rule_luck_award", "【抽奖后规则】抽奖n次后，对应奖品可解锁抽奖", "after"),
-        RULE_TREE_LUCK_AWARD("tree_luck_award", "test test", "after")
         ;
 
         private final String code;
@@ -61,7 +59,7 @@ public class DefaultLogicFilterFactory {
         }
 
         public static boolean isAfter(String code){
-            return "after".equals(LogicModel.valueOf(code.toLowerCase()).type);
+            return "after".equals(Arrays.stream(LogicModel.values()).filter(n -> n.getCode().equals(code)).findFirst().orElse(null));
         }
     }
 }

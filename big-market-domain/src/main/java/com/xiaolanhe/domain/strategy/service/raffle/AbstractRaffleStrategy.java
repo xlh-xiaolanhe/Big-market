@@ -8,6 +8,8 @@ import com.xiaolanhe.domain.strategy.model.valobj.RuleLogicCheckTypeVO;
 import com.xiaolanhe.domain.strategy.model.valobj.StrategyAwardRuleModelVO;
 import com.xiaolanhe.domain.strategy.repository.IStrategyRepository;
 import com.xiaolanhe.domain.strategy.service.armory.IStrategyDispatch;
+import com.xiaolanhe.domain.strategy.service.rule.chain.ILogicChain;
+import com.xiaolanhe.domain.strategy.service.rule.chain.factory.DefaultChainFactory;
 import com.xiaolanhe.domain.strategy.service.rule.factory.DefaultLogicFilterFactory;
 import com.xiaolanhe.types.enums.ResponseCode;
 import com.xiaolanhe.types.exceptions.AppException;
@@ -32,9 +34,13 @@ public abstract class AbstractRaffleStrategy implements IRaffleStrategy{
     @Resource
     protected IStrategyDispatch strategyDispatch;
 
-    public AbstractRaffleStrategy(IStrategyRepository repository, IStrategyDispatch strategyDispatch) {
+    // 抽奖的责任链 -> 从抽奖的规则中，解耦出前置规则为责任链处理
+    private final DefaultChainFactory defaultChainFactory;
+
+    public AbstractRaffleStrategy(IStrategyRepository repository, IStrategyDispatch strategyDispatch, DefaultChainFactory defaultChainFactory) {
         this.repository = repository;
         this.strategyDispatch = strategyDispatch;
+        this.defaultChainFactory = defaultChainFactory;
     }
 
     @Override
@@ -48,31 +54,11 @@ public abstract class AbstractRaffleStrategy implements IRaffleStrategy{
         // 1、查询策略
         StrategyEntity strategyEntity = repository.queryStrategyEntityByStrategyId(strategyId);
 
-        // 2、抽奖前规则过滤
-        RuleActionEntity<RuleActionEntity.RaffleBeforeEntity> beforeEntityRuleActionEntity = this.doCheckRaffleBeforeLogic(RaffleFactorEntity.builder()
-                        .userId(userId)
-                        .strategyId(strategyId)
-                        .build(), strategyEntity.getRuleModels());
+        // 2. 获取抽奖责任链 - 前置规则的责任链处理
+        ILogicChain logicChain = defaultChainFactory.fillLogicChain(strategyId);
 
-        if(RuleLogicCheckTypeVO.TAKE_OVER.getCode().equals(beforeEntityRuleActionEntity.getCode())) {
-            if(DefaultLogicFilterFactory.LogicModel.RULE_BLACKLIST.getCode().equals(beforeEntityRuleActionEntity.getRuleModel())) {
-                // 黑名单返回固定的奖品ID
-                return RaffleAwardEntity.builder()
-                        .awardId(beforeEntityRuleActionEntity.getData().getAwardId())
-                        .build();
-            }else if(DefaultLogicFilterFactory.LogicModel.RULE_WIGHT.getCode().equals(beforeEntityRuleActionEntity.getRuleModel())) {
-                // 根据权重返回的信息进行抽奖
-                RuleActionEntity.RaffleBeforeEntity data = beforeEntityRuleActionEntity.getData();
-                String ruleWeightValueKey = data.getRuleWeightValueKey();
-                Integer randomAwardId = strategyDispatch.getRandomAwardId(strategyId, ruleWeightValueKey.split(":")[0]);
-                return RaffleAwardEntity.builder()
-                        .awardId(randomAwardId)
-                        .build();
-            }
-        }
-
-        // 3、执行默认抽奖流程
-        Integer awardId = strategyDispatch.getRandomAwardId(strategyId);
+        // 3. 通过责任链获得，奖品ID
+        Integer awardId = logicChain.logic(userId, strategyId);
 
         // 4、查询奖品规则，用于： 抽奖中（拿到奖品id时，规则过滤校验）; 抽奖后：扣减完奖品库存后过滤，抽奖中拦截和无库存走兜底逻辑
         StrategyAwardRuleModelVO strategyAwardRuleModelVO = repository.queryStrategyAwardRuleModelVO(strategyId, awardId);
@@ -97,16 +83,6 @@ public abstract class AbstractRaffleStrategy implements IRaffleStrategy{
     }
 
 
-
-
-    /**
-     *  抽奖前置规则校验
-     * @author xiaolanhe
-     * @date 22:45 2024/9/19
-     * @param raffleFactorEntity
-     * @return com.xiaolanhe.domain.strategy.model.entity.RuleActionEntity<com.xiaolanhe.domain.strategy.model.entity.RuleActionEntity.RaffleBeforeEntity>
-     **/
-    protected abstract RuleActionEntity<RuleActionEntity.RaffleBeforeEntity> doCheckRaffleBeforeLogic(RaffleFactorEntity raffleFactorEntity, String... logics);
 
     /** 抽奖中规则校验
      * @author xiaolanhe
