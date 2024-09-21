@@ -4,7 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.xiaolanhe.domain.strategy.model.entity.RaffleAwardEntity;
 import com.xiaolanhe.domain.strategy.model.entity.RaffleFactorEntity;
 import com.xiaolanhe.domain.strategy.service.raffle.IRaffleStrategy;
-import com.xiaolanhe.domain.strategy.service.rule.impl.RuleWeightLogicFilter;
+import com.xiaolanhe.domain.strategy.service.rule.chain.impl.RuleWeightLogicChain;
+import com.xiaolanhe.domain.strategy.service.rule.impl.RuleLockLogicFilter;
 import com.xiaolanhe.types.utils.GsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
@@ -31,11 +32,15 @@ public class RaffleStrategyTest {
     private IRaffleStrategy raffleStrategy;
 
     @Resource
-    private RuleWeightLogicFilter ruleWeightLogicFilter;
+    private RuleLockLogicFilter ruleLockLogicFilter;
+
+    @Resource
+    private RuleWeightLogicChain ruleWeightLogicChain;
 
     @Before
     public void setUp() {
-        ReflectionTestUtils.setField(ruleWeightLogicFilter, "userScore", 40500L);
+        ReflectionTestUtils.setField(ruleLockLogicFilter, "userRaffleCount", 10L);
+        ReflectionTestUtils.setField(ruleWeightLogicChain, "userScore", 40500L);
     }
 
     @Test
@@ -54,6 +59,19 @@ public class RaffleStrategyTest {
         RaffleFactorEntity raffleFactorEntity = RaffleFactorEntity.builder()
                 .userId("user003")  // 黑名单用户 user001,user002,user003
                 .strategyId(100001L)
+                .build();
+
+        RaffleAwardEntity raffleAwardEntity = raffleStrategy.executeRaffle(raffleFactorEntity);
+
+        log.info("请求参数：{}", JSON.toJSONString(raffleFactorEntity));
+        log.info("测试结果：{}", JSON.toJSONString(raffleAwardEntity));
+    }
+
+    @Test
+    public void test_raffle_center_rule_lock(){
+        RaffleFactorEntity raffleFactorEntity = RaffleFactorEntity.builder()
+                .userId("xiaolanhe")
+                .strategyId(100003L)
                 .build();
 
         RaffleAwardEntity raffleAwardEntity = raffleStrategy.executeRaffle(raffleFactorEntity);
