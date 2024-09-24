@@ -1,6 +1,9 @@
 package com.xiaolanhe.domain.strategy.model.valobj;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Map;
 
@@ -12,9 +15,12 @@ import java.util.Map;
  */
 
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class RuleTreeVO {
     /** 规则树id **/
-    private Integer treeId;
+    private String treeId;
 
     /** 规则树名称 **/
     private String treeName;

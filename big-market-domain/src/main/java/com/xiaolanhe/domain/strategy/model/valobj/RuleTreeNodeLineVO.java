@@ -15,7 +15,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class RuleTreeNodeLineVO {
     /** 规则树id **/
-    private Integer treeId;
+    private String treeId;
 
     /** 规则key节点  from **/
     private String ruleNodeFrom;
