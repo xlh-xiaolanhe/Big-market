@@ -5,7 +5,7 @@ import com.xiaolanhe.domain.strategy.model.entity.RaffleAwardEntity;
 import com.xiaolanhe.domain.strategy.model.entity.RaffleFactorEntity;
 import com.xiaolanhe.domain.strategy.service.raffle.IRaffleStrategy;
 import com.xiaolanhe.domain.strategy.service.rule.chain.impl.RuleWeightLogicChain;
-import com.xiaolanhe.domain.strategy.service.rule.impl.RuleLockLogicFilter;
+import com.xiaolanhe.domain.strategy.service.rule.filter.impl.RuleLockLogicFilter;
 import com.xiaolanhe.types.utils.GsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;

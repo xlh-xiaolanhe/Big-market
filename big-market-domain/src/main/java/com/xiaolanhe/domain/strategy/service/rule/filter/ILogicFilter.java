@@ -1,4 +1,4 @@
-package com.xiaolanhe.domain.strategy.service.rule;
+package com.xiaolanhe.domain.strategy.service.rule.filter;
 
 import com.xiaolanhe.domain.strategy.model.entity.RuleActionEntity;
 import com.xiaolanhe.domain.strategy.model.entity.RuleMatterEntity;
