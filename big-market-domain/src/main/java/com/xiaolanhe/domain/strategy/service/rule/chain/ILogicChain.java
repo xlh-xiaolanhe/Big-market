@@ -1,5 +1,7 @@
 package com.xiaolanhe.domain.strategy.service.rule.chain;
 
+import com.xiaolanhe.domain.strategy.service.rule.chain.factory.DefaultChainFactory;
+
 /** 抽奖策略规则责任链接口
  * @author xiaolanhe
  * @version V1.0
@@ -16,5 +18,5 @@ public interface ILogicChain extends ILogicChainArmory{
      * @param strategyId
      * @return java.lang.Integer
      **/
-    Integer logic(String userId, Long strategyId);
+    DefaultChainFactory.StrategyAwardVO logic(String userId, Long strategyId);
 }

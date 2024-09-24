@@ -1,6 +1,6 @@
 package com.xiaolanhe.domain.strategy.model.valobj;
 
-import com.xiaolanhe.domain.strategy.service.rule.factory.DefaultLogicFilterFactory;
+import com.xiaolanhe.domain.strategy.service.rule.filter.factory.DefaultLogicFilterFactory;
 import com.xiaolanhe.types.common.Constants;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
